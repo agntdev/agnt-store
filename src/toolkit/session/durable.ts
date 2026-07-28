@@ -14,6 +14,7 @@
  */
 
 import type { StorageAdapter } from "grammy";
+import type { Order, Product } from "../../commerce.js";
 
 // Minimal shapes so this file type-checks without pulling @cloudflare/workers-types
 // into the Node build. The real bindings are provided by the Workers runtime.
@@ -50,6 +51,7 @@ interface Reminder {
   chatId: number | string;
   text: string;
 }
+interface CommerceRequest { action: string; userId?: number; product?: Product; id?: string; category?: string; patch?: Pick<Product, "title" | "description" | "price" | "category">; order?: Order; buyerId?: number; status?: Order["paymentStatus"]; chargeId?: string; }
 
 /**
  * createDurableSessionStorage — a grammY StorageAdapter that routes each session
@@ -152,6 +154,53 @@ export class ChatDO {
       await this.state.storage.put("reminders", list);
       await this.rearm(list);
       return new Response(null, { status: 204 });
+    }
+
+    // One named ChatDO instance ("commerce") is the durable catalog fallback.
+    // Each collection has a maintained index, so this never enumerates storage.
+    if (url.pathname === "/commerce" && request.method === "POST") {
+      const req = (await request.json()) as CommerceRequest;
+      const get = <T>(key: string, fallback: T) => this.state.storage.get<T>(key).then((v) => v ?? fallback);
+      const json = (value: unknown) => Response.json(value);
+      if (req.action === "ensureAdmin" && req.userId !== undefined) {
+        const admins = await get<number[]>("commerce:admins", []);
+        if (admins.length === 0) { admins.push(req.userId); await this.state.storage.put("commerce:admins", admins); }
+        return json(admins.includes(req.userId));
+      }
+      if (req.action === "adminIds") return json(await get<number[]>("commerce:admins", []));
+      if (req.action === "categories") return json(await get<string[]>("commerce:categories", []));
+      if (req.action === "addProduct" && req.product) {
+        const product = req.product; const ids = await get<string[]>("commerce:productIds", []); const categories = await get<string[]>("commerce:categories", []);
+        if (!ids.includes(product.id)) { ids.push(product.id); await this.state.storage.put("commerce:productIds", ids); }
+        if (!categories.includes(product.category)) { categories.push(product.category); await this.state.storage.put("commerce:categories", categories); }
+        await this.state.storage.put(`commerce:product:${product.id}`, product); return json(null);
+      }
+      if (req.action === "product" && req.id) return json(await this.state.storage.get<Product>(`commerce:product:${req.id}`));
+      if (req.action === "products") {
+        const ids = await get<string[]>("commerce:productIds", []); const products: Product[] = [];
+        for (const id of ids) { const p = await this.state.storage.get<Product>(`commerce:product:${id}`); if (p?.active && (!req.category || p.category === req.category)) products.push(p); }
+        return json(products.sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title)));
+      }
+      if (req.action === "updateProduct" && req.id && req.patch) {
+        const p = await this.state.storage.get<Product>(`commerce:product:${req.id}`); if (!p) return json(false);
+        const next = { ...p, ...req.patch }; const categories = await get<string[]>("commerce:categories", []);
+        if (!categories.includes(next.category)) { categories.push(next.category); await this.state.storage.put("commerce:categories", categories); }
+        await this.state.storage.put(`commerce:product:${req.id}`, next); return json(true);
+      }
+      if (req.action === "createOrder" && req.order) {
+        const ids = await get<string[]>(`commerce:buyer:${req.order.buyerId}`, []); ids.push(req.order.id);
+        await this.state.storage.put({ [`commerce:order:${req.order.id}`]: req.order, [`commerce:buyer:${req.order.buyerId}`]: ids }); return json(null);
+      }
+      if (req.action === "order" && req.id) return json(await this.state.storage.get<Order>(`commerce:order:${req.id}`));
+      if (req.action === "ordersForBuyer" && req.buyerId !== undefined) {
+        const ids = await get<string[]>(`commerce:buyer:${req.buyerId}`, []); const orders: Order[] = [];
+        for (const id of ids) { const o = await this.state.storage.get<Order>(`commerce:order:${id}`); if (o) orders.push(o); }
+        return json(orders.sort((a, b) => b.timestamp - a.timestamp));
+      }
+      if (req.action === "setOrderStatus" && req.id && req.status) {
+        const o = await this.state.storage.get<Order>(`commerce:order:${req.id}`); if (o) await this.state.storage.put(`commerce:order:${req.id}`, { ...o, paymentStatus: req.status, paymentChargeId: req.chargeId ?? o.paymentChargeId }); return json(null);
+      }
+      return new Response("bad commerce request", { status: 400 });
     }
 
     return new Response("not found", { status: 404 });

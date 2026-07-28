@@ -1,0 +1,13 @@
+[
+  {
+    "name": "/refund requires seller access",
+    "steps": [
+      {
+        "send": { "text": "/refund" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "You don’t have access to refunds." } }
+        ]
+      }
+    ]
+  }
+]
