@@ -7,7 +7,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Edit existing product details"
+              "text": "Seller tools aren't set up yet. Please try again shortly."
             }
           }
         ],

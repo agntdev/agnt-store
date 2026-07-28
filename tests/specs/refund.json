@@ -1,0 +1,13 @@
+[
+  {
+    "name": "/refund reports unavailable seller storage",
+    "steps": [
+      {
+        "send": { "text": "/refund order_example" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Refunds aren't set up yet. Please try again shortly." } }
+        ]
+      }
+    ]
+  }
+]

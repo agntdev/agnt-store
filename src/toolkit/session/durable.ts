@@ -154,6 +154,23 @@ export class ChatDO {
       return new Response(null, { status: 204 });
     }
 
+    // Explicit-key durable application records. A single named instance acts as
+    // the commerce store; callers keep index records, so no keyspace scan is
+    // ever needed to browse products or orders.
+    if (url.pathname.startsWith("/data/")) {
+      const key = decodeURIComponent(url.pathname.slice("/data/".length));
+      if (!key || key.includes("/")) return new Response("bad key", { status: 400 });
+      if (request.method === "GET") {
+        const value = await this.state.storage.get<unknown>(`data:${key}`);
+        if (value === undefined) return new Response("not found", { status: 404 });
+        return Response.json(value);
+      }
+      if (request.method === "POST") {
+        await this.state.storage.put(`data:${key}`, await request.json());
+        return Response.json({ ok: true });
+      }
+    }
+
     return new Response("not found", { status: 404 });
   }
 

@@ -7,7 +7,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Add new product to catalog"
+              "text": "Seller tools aren't set up yet. Please try again shortly."
             }
           }
         ],

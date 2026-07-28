@@ -5,9 +5,9 @@
       {
         "expect": [
           {
-            "method": "sendMessage",
+            "method": "editMessageText",
             "payload": {
-              "text": "Open product page with purchase option"
+              "text": "The catalog isn't set up yet. Please try again shortly."
             }
           }
         ],
