@@ -7,7 +7,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "View purchase history with re-download options"
+              "text": "Your order history isn’t available yet. Please try again shortly."
             }
           }
         ],

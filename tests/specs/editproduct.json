@@ -7,7 +7,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Edit existing product details"
+              "text": "You don’t have access to seller tools."
             }
           }
         ],
