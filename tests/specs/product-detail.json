@@ -1,0 +1,20 @@
+[
+  {
+    "name": "View Product",
+    "steps": [
+      {
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Open product page with purchase option"
+            }
+          }
+        ],
+        "send": {
+          "callback": "product:detail"
+        }
+      }
+    ]
+  }
+]
