@@ -1,0 +1,20 @@
+[
+  {
+    "name": "/orders",
+    "steps": [
+      {
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "View purchase history with re-download options"
+            }
+          }
+        ],
+        "send": {
+          "text": "/orders"
+        }
+      }
+    ]
+  }
+]
