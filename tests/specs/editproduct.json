@@ -1,0 +1,20 @@
+[
+  {
+    "name": "/editproduct",
+    "steps": [
+      {
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Edit existing product details"
+            }
+          }
+        ],
+        "send": {
+          "text": "/editproduct"
+        }
+      }
+    ]
+  }
+]
