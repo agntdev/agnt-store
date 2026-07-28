@@ -1,0 +1,20 @@
+[
+  {
+    "name": "/addproduct",
+    "steps": [
+      {
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Add new product to catalog"
+            }
+          }
+        ],
+        "send": {
+          "text": "/addproduct"
+        }
+      }
+    ]
+  }
+]
